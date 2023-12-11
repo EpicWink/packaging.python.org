@@ -8,8 +8,9 @@ Simple repository API
 The simple repository API is an HTTP-based protocol for tools to list and
 download Python :term:`packages <Distribution Package>`. It is the API which
 :term:`package indexes <Package Index>` implement to provide package managers
-(eg :ref:`pip`) enough information to determine what to install for a given set
-of :term:`requirements <Requirement>`, then go on to install those packages.
+(for example, :ref:`pip`) enough information to determine what to install for a
+given set of :term:`requirements <Requirement>`, then go on to install those
+packages.
 
 There is one version series for the API: version 1. Minor versions add optional
 features, and are described below.
@@ -26,7 +27,7 @@ Specification
 
 .. collapse:: OpenAPI
 
-   An `OpenAPI <https://spec.openapis.org/oas/v3.1.0>`__ document which
+   An `OpenAPI <https://spec.openapis.org/oas/v3.1.0>`_ document which
    specifies the full API. It declares both representations, but only details
    the JSON format's schema.
 
@@ -127,8 +128,8 @@ Endpoints
 
 The API consists of two metadata endpoints:
 
-* :ref:`repo_api_projects_list`
-* :ref:`repo_api_project_details`
+* :ref:`simple-repository-api-projects-list`
+* :ref:`simple-repository-api-project-details`
 
 The root URL ``/`` represents the base URL, where it would be prefixed with
 the index's URL to construct the full URL which tools make the request for.
@@ -137,7 +138,7 @@ If a client makes a request to a URL without a trailing forward-slash ``/``,
 then the index server should redirect the client to the same URL with the ``/``
 appended.
 
-.. _repo_api_projects_list:
+.. _simple-repository-api-projects-list:
 
 Projects list
 -------------
@@ -164,8 +165,8 @@ necessarily :ref:`normalized <name-normalization>`). This element has
 attributes:
 
 * ``href`` (required) - the value is a URL to the :ref:`project details
-  <repo_api_project_details>` page for the project. This URL must end with a
-  forward-slash ``/``, but may be absolute or relative.
+  <simple-repository-api-project-details>` page for the project. This URL must
+  end with a forward-slash ``/``, but may be absolute or relative.
 
 An example response page:
 
@@ -217,7 +218,7 @@ An example response document:
      ]
    }
 
-.. _repo_api_project_details:
+.. _simple-repository-api-project-details:
 
 Project details
 ---------------
@@ -238,7 +239,7 @@ API file-related features:
 * The file can be hosted anywhere, not necessarily by the index server.
 
 * The file's URL in the list-item is a URL to fetch the file. It may be
-  absolute or relative. It's last path segment must be the file's filename.
+  absolute or relative. Its last path segment must be the file's filename.
 
 * Hashes of the file's contents are optional but recommended. The hash name is
   the name of the hash algorithm's function, and the value is the hex-encoded
@@ -256,7 +257,7 @@ API file-related features:
   be provided. Clients should ignore the file when installing to an environment
   for a version of Python which doesn't satisfy the requirement.
 
-* Files may be marked as :ref:`yanked <simple_repo_api_yanked>`.
+* Files may be marked as :ref:`yanked <simple-repository-api-yanked>`.
 
 * The file's :ref:`Core Metadata <core-metadata>` must be provided if its
   existence is indicated. In addition, the file must contain this metadata
@@ -301,8 +302,8 @@ file's filename. This element has attributes:
   greater-than ``>`` becomes the string ``&gt;``).
 
 * ``data-yanked`` (optional) - a `data attribute`_, whose existence indicates
-  the file was :ref:`yanked <simple_repo_api_yanked>`. The attribute may have a
-  value which specifies the reason the file was yanked.
+  the file was :ref:`yanked <simple-repository-api-yanked>`. The attribute may
+  have a value which specifies the reason the file was yanked.
 
 * ``data-core-metadata`` (optional) - a `data attribute`_, whose existence
   indicates the index provides the file's core-metadata. The attribute's value
@@ -378,9 +379,9 @@ represents an object with properties:
     :ref:`core-metadata-requires-python` metadata field for the file's release.
 
   * ``yanked`` (boolean or string, optional) - indicates whether the file
-    should be considered :ref:`yanked <simple_repo_api_yanked>` (if truthy,
-    using Python :external+python:ref:`truthiness <booleans>`) or not (if
-    falsy).
+    should be considered :ref:`yanked <simple-repository-api-yanked>` (if
+    truthy, using Python :external+python:ref:`truthiness <booleans>`) or not
+    (if falsy).
 
     If this is a string, then it specifies the reason for being yanked.
 
@@ -429,13 +430,13 @@ An example response document:
      ]
    }
 
-.. _simple_repo_api_yanked:
+.. _simple-repository-api-yanked:
 
 Yanked files
 ############
 
 A yanked :term:`package file <Distribution Package>` is one intended to be
-now-unavailable for installation from the index. The file's yank-status can be
+now-unavailable for installation from the index. The file's yank status can be
 changed at anypoint (to be unyanked, or even yanked again).
 
 Indexes may provide a textual reason for why the file has been yanked, and
@@ -456,8 +457,8 @@ to install a yanked release and not install anything. Installers should follow
 the spirit of the intention quoted above and prevent new dependencies on yanked
 releases and files.
 
-Installers should emit a warning when it does decide to install a yanked file.
-That warning may utilize the reason for the yanking.
+Installers should emit a warning if they decide to install a yanked file. That
+warning may utilize the reason for the yanking.
 
 What this means is left up to the specific installer, to decide how to best fit
 into the overall usage of their installer. However, there are two suggested
@@ -474,8 +475,8 @@ approaches to take:
   installed. In this case, a yanked file SHOULD not be used when creating or
   updating a lock file from some input file or command.
 
-Mirror indexes may omit list-items for yanked files in their responses to
-clients, or may include list-items for yanked files along with their
+Mirror indexes may omit list items for yanked files in their responses to
+clients, or may include list items for yanked files along with their
 yank-status (this status must be present for yanked files).
 
 History
