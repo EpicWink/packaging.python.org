@@ -508,6 +508,8 @@ History
   choose between them, and declaring both formats as API v1, in :pep:`691`
 * October 2022: project versions and file size and upload-time in the JSON
   format, in :pep:`700`
+* February 2023: extends the API to mitigate dependency confusion attacks, in
+  :pep:`708`
 * June 2023: renaming the field which provides package metadata independently
   from a package, in :pep:`714`
 
