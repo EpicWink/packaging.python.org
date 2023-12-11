@@ -282,6 +282,12 @@ A `metadata element`_ ``<meta>`` may exist anywhere in the HTML document, with
 ``content`` attribute value equal the API version which the response
 implements.
 
+Any number of `metadata element`_'s ``<meta>`` may exist anywhere in the HTML
+document, with ``name`` attribute value equal to the string ``pypi:tracks``,
+and ``content`` attribute value the URL to the project-details page in the
+package index which "owns" the project namespace (in essence, the source). *New
+in API v1.2.*
+
 Each distribution package file provided by the index for the project has a
 corresponding `anchor element`_ ``<a>``:
 
@@ -348,6 +354,12 @@ represents an object with properties:
 
   * ``api-version`` (string, required) - the API version the response
     implements.
+
+  * ``tracks`` (array of strings, optional) - the URLs to the project-details
+    page in the package indexes which "own" the project namespace (in essence,
+    the source).
+
+    *New in API v1.2*
 
 * ``name`` (string, required) - the :ref:`normalized <name-normalization>` name
   of the project.
