@@ -88,7 +88,18 @@ paths:
                   - files
                 properties:
                   meta:
-                    $ref: '#/components/schemas/meta'
+                    allOf:
+                      - $ref: '#/components/schemas/meta'
+                      - title: Response metadata specific to project details
+                        type: object
+                        properties:
+                          tracks:
+                            title: Tracked projects URLs
+                            type: array
+                            items:
+                              title: Tracked project URL
+                              type: string
+                              format: uri
                   name:
                     title: Project name (normalised)
                     type: string
