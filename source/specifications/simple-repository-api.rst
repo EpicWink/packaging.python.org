@@ -157,12 +157,11 @@ A `metadata element`_ ``<meta>`` may exist anywhere in the HTML document, with
 implements.
 
 Each project provided by the index has a corresponding `anchor element`_
-``<a>``:
+``<a>``, whose body text must exist and is the name of the project (not
+necessarily :ref:`normalized <name-normalization>`). This element has
+attributes:
 
-* Its body text must exist and is the name of the project (not necessarily
-  :ref:`normalized <name-normalization>`).
-
-* Its ``href`` attribute must exist and is a URL to the :ref:`project details
+* ``href`` (required) - the value is a URL to the :ref:`project details
   <simple-repository-api-project-details>` page for the project. This URL must
   end with a forward-slash ``/``, but may be absolute or relative.
 
@@ -280,35 +279,34 @@ A `metadata element`_ ``<meta>`` may exist anywhere in the HTML document, with
 implements.
 
 Each distribution package file provided by the index for the project has a
-corresponding `anchor element`_ ``<a>``:
+corresponding `anchor element`_ ``<a>``, whose body text must exist and be the
+file's filename. This element has attributes:
 
-* Its body text must exist and is the file's filename.
-
-* Its ``href`` attribute must exist and is the file's URL.
+* ``href`` (required) - attribute must exist and is the file's URL.
 
   * This URL should also include a URL fragment of the form
     ``#<hash>=<value>``, where ``<hash>`` is the hash name and ``<value>`` is
     hash value.
 
-* A ``data-gpg-sig`` `data attribute`_ may exist, and have value ``true`` to
-  indicate a file has a GPG signature (at the location described above), or
+* ``data-gpg-sig`` (optional) - a `data attribute`_, which has value ``true``
+  to indicate a file has a GPG signature (at the location described above), or
   ``false`` to indicate no signature. Indexes should do this for none or all
   files (not some).
 
-* A ``data-requires-python`` `data attribute`_ may exist, and have value equal
-  to the :ref:`core-metadata-requires-python` metadata field for the file's
-  release, with HTML-encoding (less-than ``<`` becomes the string ``&lt;``, and
+* ``data-requires-python`` (optional) - a `data attribute`_, whose value is the
+  :ref:`core-metadata-requires-python` metadata field for the file's release,
+  with HTML-encoding (less-than ``<`` becomes the string ``&lt;``, and
   greater-than ``>`` becomes the string ``&gt;``).
 
-* A ``data-yanked`` `data attribute`_ may exist to indicate the file was
-  :ref:`yanked <simple-repository-api-yanked>`. The attribute may have a value
-  which specifies the reason the file is yanked.
+* ``data-yanked`` (optional) - a `data attribute`_, whose existence indicates
+  the file was :ref:`yanked <simple-repository-api-yanked>`. The attribute may
+  have a value which specifies the reason the file was yanked.
 
-* A ``data-core-metadata`` `data attribute`_ may exist to indicate the index
-  provides the file's core-metadata. The attribute's value should be of the
-  form ``<hash>=<value>``, where ``<hash>`` is the hash name and ``<value>`` is
-  hash value; otherwise, the value may the string ``true``, or not provided, if
-  the metadata's hash is not available.
+* ``data-core-metadata`` (optional) - a `data attribute`_, whose existence
+  indicates the index provides the file's core-metadata. The attribute's value
+  should be of the form ``<hash>=<value>``, where ``<hash>`` is the hash name
+  and ``<value>`` is hash value; otherwise, the value may the string ``true``,
+  or not provided, if the metadata's hash is not available.
 
   This attribute may be duplicated as the `data attribute`_
   ``data-dist-info-metadata``.
