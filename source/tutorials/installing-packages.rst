@@ -52,7 +52,7 @@ please install the latest 3.x version from `python.org`_ or refer to the
 
 .. Note:: If you're a newcomer and you get an error like this:
 
-    .. code-block:: python
+    .. code-block:: pycon
 
         >>> python3 --version
         Traceback (most recent call last):
@@ -69,7 +69,7 @@ please install the latest 3.x version from `python.org`_ or refer to the
    notebook, you can run system commands like those in this tutorial by
    prefacing them with a ``!`` character:
 
-    ::
+   .. code-block:: text
 
         In [1]: import sys
                 !{sys.executable} --version
@@ -133,21 +133,21 @@ standard library:
 
 If that still doesn't allow you to run ``python -m pip``:
 
- * Securely Download `get-pip.py
-   <https://bootstrap.pypa.io/get-pip.py>`_ [1]_
+* Securely Download `get-pip.py
+  <https://bootstrap.pypa.io/get-pip.py>`_ [1]_
 
- * Run ``python get-pip.py``. [2]_  This will install or upgrade pip.
-   Additionally, it will install :ref:`setuptools` and :ref:`wheel` if they're
-   not installed already.
+* Run ``python get-pip.py``. [2]_  This will install or upgrade pip.
+  Additionally, it will install :ref:`setuptools` and :ref:`wheel` if they're
+  not installed already.
 
-   .. warning::
+  .. warning::
 
-      Be cautious if you're using a Python install that's managed by your
-      operating system or another package manager. get-pip.py does not
-      coordinate with those tools, and may leave your system in an
-      inconsistent state. You can use ``python get-pip.py --prefix=/usr/local/``
-      to install in ``/usr/local`` which is designed for locally-installed
-      software.
+     Be cautious if you're using a Python install that's managed by your
+     operating system or another package manager. get-pip.py does not
+     coordinate with those tools, and may leave your system in an
+     inconsistent state. You can use ``python get-pip.py --prefix=/usr/local/``
+     to install in ``/usr/local`` which is designed for locally-installed
+     software.
 
 
 Ensure pip, setuptools, and wheel are up to date
@@ -224,12 +224,12 @@ environments.
 Currently, there are two common tools for creating Python virtual environments:
 
 * :doc:`venv <python:library/venv>` is available by default in Python 3.3 and later, and installs
-  :ref:`pip` and :ref:`setuptools` into created virtual environments in
-  Python 3.4 and later.
+  :ref:`pip` into created virtual environments in Python 3.4 and later
+  (Python versions prior to 3.12 also installed :ref:`setuptools`).
 * :ref:`virtualenv` needs to be installed separately, but supports Python 2.7+
   and Python 3.3+, and :ref:`pip`, :ref:`setuptools` and :ref:`wheel` are
-  always installed into created virtual environments by default (regardless of
-  Python version).
+  installed into created virtual environments by default. Note that ``setuptools`` is no longer
+  included by default starting with Python 3.12 (and ``virtualenv`` follows this behavior).
 
 The basic usage is like so:
 
@@ -304,9 +304,9 @@ The most common usage of :ref:`pip` is to install from the :term:`Python Package
 Index <Python Package Index (PyPI)>` using a :term:`requirement specifier
 <Requirement Specifier>`. Generally speaking, a requirement specifier is
 composed of a project name followed by an optional :term:`version specifier
-<Version Specifier>`.  :pep:`440` contains a :pep:`full
-specification <440#version-specifiers>`
-of the currently supported specifiers. Below are some examples.
+<Version Specifier>`.  A full description of the supported specifiers can be
+found in the :ref:`Version specifier specification <version-specifiers>`.
+Below are some examples.
 
 To install the latest version of "SomeProject":
 
@@ -351,7 +351,7 @@ To install greater than or equal to one version and less than another:
         py -m pip install "SomeProject>=1,<2"
 
 
-To install a version that's :pep:`"compatible" <440#compatible-release>`
+To install a version that's :ref:`compatible <version-specifiers-compatible-release>`
 with a certain version: [4]_
 
 .. tab:: Unix/macOS

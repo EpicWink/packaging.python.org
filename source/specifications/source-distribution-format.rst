@@ -20,6 +20,8 @@ specification.
 
 Source distributions are also known as *sdists* for short.
 
+.. _source-distribution-format-source-tree:
+
 Source trees
 ============
 
@@ -29,6 +31,8 @@ can be use to build a source distribution from the contained files and
 directories. :pep:`517` and :pep:`518` specify what is required to meet the
 definition of what :file:`pyproject.toml` must contain for something to be
 deemed a source tree.
+
+.. _source-distribution-format-sdist:
 
 Source distribution file name
 =============================
@@ -58,9 +62,14 @@ A ``.tar.gz`` source distribution (sdist) contains a single top-level directory
 called ``{name}-{version}`` (e.g. ``foo-1.0``), containing the source files of
 the package. The name and version MUST match the metadata stored in the file.
 This directory must also contain a :file:`pyproject.toml` in the format defined in
-:ref:`declaring-build-dependencies`, and a ``PKG-INFO`` file containing
+:ref:`pyproject-toml-spec`, and a :file:`PKG-INFO` file containing
 metadata in the format described in the :ref:`core-metadata` specification. The
 metadata MUST conform to at least version 2.2 of the metadata specification.
+
+If the metadata version is 2.4 or greater, the source distribution MUST contain
+any license files specified by the ``License-File`` field in the :file:`PKG-INFO`
+at their respective paths relative to the root directory of the sdist
+(containing the :file:`pyproject.toml` and the :file:`PKG-INFO` metadata).
 
 No other content of a sdist is required or defined. Build systems can store
 whatever information they need in the sdist to build the project.
@@ -143,8 +152,12 @@ verification* in ``tarfile`` documentation apply to their tool.
 History
 =======
 
-* August 2023: Standardized the source distribution archive features (:pep:`721`)
-* September 2022: Standardized the filename of a source distribution (:pep:`625`)
-* July 2021: Defined what a source tree is
-* November 2020: :pep:`643` converted to this specification
-* December 2000: Source distributions standardized in :pep:`643`
+* November 2020: The original version of this specification was approved through
+  :pep:`643`.
+* July 2021: Defined what a source tree is.
+* September 2022: The filename of a source distribution was standardized through
+  :pep:`625`.
+* August 2023: Source distribution archive features were standardized through
+  :pep:`721`.
+* December 2024: License files inclusion into source distribution was standardized
+  through :pep:`639`.

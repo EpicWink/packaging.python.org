@@ -1,3 +1,5 @@
+.. highlight:: text
+
 .. _recording-installed-packages:
 
 ============================
@@ -17,22 +19,6 @@ files in a format specific to Python tooling, it should still record the name
 and version of the installed project.
 
 
-History and change workflow
-===========================
-
-The metadata described here was first specified in :pep:`376`, and later
-amended in :pep:`627` (and other PEPs).
-It was formerly known as *Database of Installed Python Distributions*.
-As with other PyPA specifications, editorial amendments with no functional
-impact may be made through the GitHub pull request workflow. Proposals for
-functional changes that would require amendments to package building and/or
-installation tools must be made through the PEP process (see :pep:`1`).
-
-While this document is the normative specification, the PEPs that introduce
-changes to it may include additional information such as rationales and
-backwards compatibility considerations.
-
-
 The .dist-info directory
 ========================
 
@@ -42,12 +28,11 @@ packages (commonly, the ``site-packages`` directory).
 
 This directory is named as ``{name}-{version}.dist-info``, with ``name`` and
 ``version`` fields corresponding to :ref:`core-metadata`. Both fields must be
-normalized (see :ref:`name-normalization` and
-:pep:`PEP 440 <440#normalization>` for the definition of normalization for
-each field respectively), and replace dash (``-``) characters with
-underscore (``_``) characters, so the ``.dist-info`` directory always has
-exactly one dash (``-``) character in its stem, separating the ``name`` and
-``version`` fields.
+normalized (see the :ref:`name normalization specification <name-normalization>`
+and the :ref:`version normalization specification <version-specifiers-normalization>`),
+and replace dash (``-``) characters with underscore (``_``) characters,
+so the ``.dist-info`` directory always has exactly one dash (``-``) character in
+its stem, separating the ``name`` and ``version`` fields.
 
 Historically, tools have failed to replace dot characters or normalize case in
 the ``name`` field, or not perform normalization in the ``version`` field.
@@ -80,6 +65,12 @@ detail below:
 The ``METADATA`` file is mandatory.
 All other files may be omitted at the installing tool's discretion.
 Additional installer-specific files may be present.
+
+This :file:`.dist-info/` directory may contain the following directories, described in
+detail below:
+
+* :file:`licenses/`: contains license files.
+* :file:`sboms/`: contains Software Bill-of-Materials files (SBOMs).
 
 .. note::
 
@@ -127,9 +118,9 @@ On Windows, directories may be separated either by forward- or backslashes
 (``/`` or ``\``).
 
 The *hash* is either an empty string or the name of a hash algorithm from
-``hashlib.algorithms_guaranteed``, followed by the equals character ``=`` and
+:py:data:`hashlib.algorithms_guaranteed`, followed by the equals character ``=`` and
 the digest of the file's contents, encoded with the urlsafe-base64-nopad
-encoding (``base64.urlsafe_b64encode(digest)`` with trailing ``=`` removed).
+encoding (:py:func:`base64.urlsafe_b64encode(digest) <base64.urlsafe_b64encode()>` with trailing ``=`` removed).
 
 The *size* is either the empty string, or file's size in bytes,
 as a base 10 integer.
@@ -159,7 +150,7 @@ Here is an example snippet of a possible ``RECORD`` file::
     __pycache__/black.cpython-38.pyc,,
     __pycache__/blackd.cpython-38.pyc,,
     black-19.10b0.dist-info/INSTALLER,sha256=zuuue4knoyJ-UwPPXg8fezS7VCrXJQrAP7zeNuwvFQg,4
-    black-19.10b0.dist-info/LICENSE,sha256=nAQo8MO0d5hQz1vZbhGqqK_HLUqG1KNiI9erouWNbgA,1080
+    black-19.10b0.dist-info/licenses/LICENSE,sha256=nAQo8MO0d5hQz1vZbhGqqK_HLUqG1KNiI9erouWNbgA,1080
     black-19.10b0.dist-info/METADATA,sha256=UN40nGoVVTSpvLrTBwNsXgZdZIwoKFSrrDDHP6B7-A0,58841
     black-19.10b0.dist-info/RECORD,,
     black.py,sha256=45IF72OgNfF8WpeNHnxV2QGfbCLubV5Xjl55cI65kYs,140161
@@ -176,6 +167,15 @@ attempt to uninstall or upgrade the package.
 (This restriction does not apply to tools that rely on other sources of information,
 such as system package managers in Linux distros.)
 
+.. note::
+
+   It is *strongly discouraged* for an installed package to modify itself
+   (e.g., store cache files under its namespace in ``site-packages``).
+   Changes inside ``site-packages`` should be left to specialized installer
+   tools such as pip. If a package is nevertheless modified in this way,
+   then the ``RECORD`` must be updated, otherwise uninstalling the package
+   will leave unlisted files in place (possibly resulting in a zombie
+   namespace package).
 
 The INSTALLER file
 ==================
@@ -225,6 +225,26 @@ of requirement (i.e. name plus version specifier).
 Its detailed specification is at :ref:`direct-url`.
 
 
+The :file:`licenses/` subdirectory
+==================================
+
+If the metadata version is 2.4 or greater and one or more ``License-File``
+fields is specified, the :file:`.dist-info/` directory MUST contain a :file:`licenses/`
+subdirectory which MUST contain the files listed in the ``License-File`` fields in
+the :file:`METADATA` file at their respective paths relative to the
+:file:`licenses/` directory.
+Any files in this directory MUST be copied from wheels by the install tools.
+
+
+The :file:`sboms/` subdirectory
+==================================
+
+All files contained within the :file:`.dist-info/sboms/` directory MUST
+be Software Bill-of-Materials (SBOM) files that describe software contained
+within the installed package.
+Any files in this directory MUST be copied from wheels by the install tools.
+
+
 Intentionally preventing changes to installed packages
 ======================================================
 
@@ -252,3 +272,18 @@ ensuring both locations appear on the default Python import path).
 In some circumstances, it may be desirable to block even installation of
 additional packages via Python-specific tools. For these cases refer to
 :ref:`externally-managed-environments`
+
+
+History
+=======
+
+- June 2009: The original version of this specification was approved through
+  :pep:`376`.  At the time, it was known as the *Database of Installed Python
+  Distributions*.
+- March 2020: The specification of the ``direct_url.json`` file was approved
+  through :pep:`610`. It is only mentioned on this page; see :ref:`direct-url`
+  for the full definition.
+- September 2020: Various amendments and clarifications were approved through
+  :pep:`627`.
+- December 2024: The :file:`.dist-info/licenses/` directory was specified through
+  :pep:`639`.

@@ -54,8 +54,10 @@ Create the following file structure locally:
 The directory containing the Python files should match the project name. This
 simplifies the configuration and is more obvious to users who install the package.
 
-:file:`__init__.py` is required to import the directory as a package,
-even if as is our case for this tutorial that file is empty.
+Creating the file :file:`__init__.py` is recommended because the existence of an
+:file:`__init__.py` file allows users to import the directory as a regular package,
+even if (as is the case in this tutorial) :file:`__init__.py` is empty.
+[#namespace-packages]_
 
 :file:`example.py` is an example of a module within the package that could
 contain the logic (functions, classes, constants, etc.) of your package.
@@ -103,6 +105,8 @@ Creating a test directory
 :file:`tests/` is a placeholder for test files. Leave it empty for now.
 
 
+.. _choosing-build-backend:
+
 Choosing a build backend
 ------------------------
 
@@ -132,38 +136,7 @@ The :file:`pyproject.toml` tells :term:`build frontend <Build Frontend>` tools l
 examples for common build backends, but check your backend's own documentation
 for more details.
 
-.. tab:: Hatchling
-
-    .. code-block:: toml
-
-        [build-system]
-        requires = ["hatchling"]
-        build-backend = "hatchling.build"
-
-.. tab:: setuptools
-
-    .. code-block:: toml
-
-        [build-system]
-        requires = ["setuptools>=61.0"]
-        build-backend = "setuptools.build_meta"
-
-.. tab:: Flit
-
-    .. code-block:: toml
-
-        [build-system]
-        requires = ["flit_core>=3.4"]
-        build-backend = "flit_core.buildapi"
-
-.. tab:: PDM
-
-    .. code-block:: toml
-
-        [build-system]
-        requires = ["pdm-backend"]
-        build-backend = "pdm.backend"
-
+.. include:: ../shared/build-backend-tabs.rst
 
 The ``requires`` key is a list of packages that are needed to build your package.
 The :term:`frontend <Build Frontend>` should install them automatically when building your package.
@@ -171,6 +144,8 @@ Frontends usually run builds in isolated environments, so omitting dependencies
 here may cause build-time errors.
 This should always include your backend's package, and might have other build-time
 dependencies.
+The minimum version specified in the above code block is the one that introduced support
+for :ref:`the new license metadata <license-and-license-files>`.
 
 The ``build-backend`` key is the name of the Python object that frontends will use
 to perform the build.
@@ -206,25 +181,25 @@ following this tutorial.
     ]
     description = "A small example package"
     readme = "README.md"
-    requires-python = ">=3.7"
+    requires-python = ">=3.9"
     classifiers = [
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ]
+    license = "MIT"
+    license-files = ["LICEN[CS]E*"]
 
     [project.urls]
-    "Homepage" = "https://github.com/pypa/sampleproject"
-    "Bug Tracker" = "https://github.com/pypa/sampleproject/issues"
+    Homepage = "https://github.com/pypa/sampleproject"
+    Issues = "https://github.com/pypa/sampleproject/issues"
 
 - ``name`` is the *distribution name* of your package. This can be any name as
   long as it only contains letters, numbers, ``.``, ``_`` , and ``-``. It also
   must not already be taken on PyPI. **Be sure to update this with your
   username** for this tutorial, as this ensures you won't try to upload a
   package with the same name as one which already exists.
-- ``version`` is the package version. See the :ref:`version specifier specification <version-specifiers>`
-  for more details on versions. Some build backends allow it to be specified
-  another way, such as from a file or a git tag.
+- ``version`` is the package version. (Some build backends allow it to be
+  specified another way, such as from a file or Git tag.)
 - ``authors`` is used to identify the author of the package; you specify a name
   and an email for each author. You can also list ``maintainers`` in the same
   format.
@@ -233,24 +208,29 @@ following this tutorial.
   package. This is shown on the package detail page on PyPI.
   In this case, the description is loaded from :file:`README.md` (which is a
   common pattern). There also is a more advanced table form described in the
-  :ref:`project metadata specification <declaring-project-metadata>`.
+  :ref:`pyproject.toml guide <writing-pyproject-toml>`.
 - ``requires-python`` gives the versions of Python supported by your
-  project. Installers like :ref:`pip` will look back through older versions of
+  project. An installer like :ref:`pip` will look back through older versions of
   packages until it finds one that has a matching Python version.
 - ``classifiers`` gives the index and :ref:`pip` some additional metadata
   about your package. In this case, the package is only compatible with Python
-  3, is licensed under the MIT license, and is OS-independent. You should
-  always include at least which version(s) of Python your package works on,
-  which license your package is available under, and which operating systems
+  3 and is OS-independent. You should
+  always include at least which version(s) of Python your package works on
+  and which operating systems
   your package will work on. For a complete list of classifiers, see
   https://pypi.org/classifiers/.
+- ``license`` is the :term:`SPDX license expression <License Expression>` of
+  your package.
+- ``license-files`` is the list of glob paths to the license files,
+  relative to the directory where :file:`pyproject.toml` is located.
 - ``urls`` lets you list any number of extra links to show on PyPI.
   Generally this could be to the source, documentation, issue trackers, etc.
 
-See the :ref:`project metadata specification <declaring-project-metadata>` for
-details on these and other fields that can be defined in the ``[project]``
-table. Other common fields are ``keywords`` to improve discoverability and the
-``dependencies`` that are required to install your package.
+See the :ref:`pyproject.toml guide <writing-pyproject-toml>` for details
+on these and other fields that can be defined in the ``[project]``
+table. Other common fields are ``keywords`` to improve discoverability
+and the ``dependencies`` that are required to install your package.
+
 
 Creating README.md
 ------------------
@@ -301,6 +281,9 @@ MIT license:
 
 Most build backends automatically include license files in packages. See your
 backend's documentation for more details.
+If you include the path to license in the ``license-files`` key of
+:file:`pyproject.toml`, and your build backend supports :pep:`639`,
+the file will be automatically included in the package.
 
 
 Including other files
@@ -417,16 +400,15 @@ Once installed, run Twine to upload all of the archives under :file:`dist`:
 
         py -m twine upload --repository testpypi dist/*
 
-You will be prompted for a username and password. For the username,
-use ``__token__``. For the password, use the token value, including
-the ``pypi-`` prefix.
+You will be prompted for an API token. Use the token value, including the ``pypi-``
+prefix. Note that the input will be hidden, so be sure to paste correctly.
 
 After the command completes, you should see output similar to this:
 
 .. code-block::
 
     Uploading distributions to https://test.pypi.org/legacy/
-    Enter your username: __token__
+    Enter your API token:
     Uploading example_package_YOUR_USERNAME_HERE-0.0.1-py3-none-any.whl
     100% ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 8.2/8.2 kB • 00:01 • ?
     Uploading example_package_YOUR_USERNAME_HERE-0.0.1.tar.gz
@@ -491,7 +473,7 @@ Make sure you're still in your virtual environment, then run Python:
 
 and import the package:
 
-.. code-block:: python
+.. code-block:: pycon
 
     >>> from example_package_YOUR_USERNAME_HERE import example
     >>> example.add_one(2)
@@ -527,11 +509,29 @@ differences:
 At this point if you want to read more on packaging Python libraries here are
 some things you can do:
 
-.. TODO: Add links to other guides
-.. TODO: Add links to backend configuration docs
-
+* Read about advanced configuration for your chosen build backend:
+  `Hatchling <hatchling-config_>`_,
+  :doc:`setuptools <setuptools:userguide/pyproject_config>`,
+  :doc:`Flit <flit:pyproject_toml>`, `PDM <pdm-config_>`_.
+* Look at the :doc:`guides </guides/index>` on this site for more advanced
+  practical information, or the :doc:`discussions </discussions/index>`
+  for explanations and background on specific topics.
 * Consider packaging tools that provide a single command-line interface for
   project management and packaging, such as :ref:`hatch`, :ref:`flit`,
   :ref:`pdm`, and :ref:`poetry`.
-* Read :pep:`517` and :pep:`518` for background and details on build tool configuration.
-* Read about :doc:`/guides/packaging-binary-extensions`.
+
+
+----
+
+.. rubric:: Notes
+
+.. [#namespace-packages]
+   Technically, you can also create Python packages without an ``__init__.py`` file,
+   but those are called :doc:`namespace packages </guides/packaging-namespace-packages>`
+   and considered an **advanced topic** (not covered in this tutorial).
+   If you are only getting started with Python packaging, it is recommended to
+   stick with *regular packages* and ``__init__.py`` (even if the file is empty).
+
+
+.. _hatchling-config: https://hatch.pypa.io/latest/config/metadata/
+.. _pdm-config: https://pdm-project.org/latest/reference/pep621/

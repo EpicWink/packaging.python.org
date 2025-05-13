@@ -51,7 +51,7 @@ To install pip and wheel for the system Python, there are two options:
 
 1. Enable the `EPEL repository <https://fedoraproject.org/wiki/EPEL>`_ using
    `these instructions
-   <https://docs.fedoraproject.org/en-US/epel/#how_can_i_use_these_extra_packages>`__.
+   <https://docs.fedoraproject.org/en-US/epel/getting-started/>`__.
    On EPEL 7, you can install pip and wheel like so:
 
    .. code-block:: bash
@@ -107,9 +107,9 @@ To install pip, wheel, and setuptools, in a parallel, non-system environment
 openSUSE
 ~~~~~~~~
 
-  .. code-block:: bash
+.. code-block:: bash
 
-    sudo zypper install python3-pip python3-setuptools python3-wheel
+   sudo zypper install python3-pip python3-setuptools python3-wheel
 
 
 .. _debian-ubuntu:
@@ -134,9 +134,9 @@ Firstly, update and refresh repository lists by running this command:
 Arch Linux
 ~~~~~~~~~~
 
-  .. code-block:: bash
+.. code-block:: bash
 
-    sudo pacman -S python-pip
+   sudo pacman -S python-pip
 
 ----
 

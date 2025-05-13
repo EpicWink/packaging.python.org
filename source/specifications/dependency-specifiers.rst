@@ -1,3 +1,5 @@
+.. highlight:: text
+
 .. _dependency-specifiers:
 
 =====================
@@ -16,8 +18,8 @@ acceptable, so the language permits describing all these cases.
 The language defined is a compact line based format which is already in
 widespread use in pip requirements files, though we do not specify the command
 line option handling that those files permit. There is one caveat - the
-URL reference form, specified in :pep:`440` is not actually
-implemented in pip, but since :pep:`440` is accepted, we use that format rather
+URL reference form, specified in :ref:`Versioning specifier specification <version-specifiers>`
+is not actually implemented in pip, but we use that format rather
 than pip's current native format.
 
 Specification
@@ -57,20 +59,21 @@ as comments, multiple line support via continuations, or other such features.
 The full grammar including annotations to build a useful parse tree is
 included at the end of this document.
 
-Versions may be specified according to the :pep:`440` rules. (Note:
+Versions may be specified according to the rules of the
+:ref:`Version specifier specification <version-specifiers>`. (Note:
 URI is defined in :rfc:`std-66 <3986>`)::
 
     version_cmp   = wsp* '<' | '<=' | '!=' | '==' | '>=' | '>' | '~=' | '==='
     version       = wsp* ( letterOrDigit | '-' | '_' | '.' | '*' | '+' | '!' )+
     version_one   = version_cmp version wsp*
-    version_many  = version_one (wsp* ',' version_one)*
+    version_many  = version_one (',' version_one)* (',' wsp*)?
     versionspec   = ( '(' version_many ')' ) | version_many
     urlspec       = '@' wsp* <URI_reference>
 
 Environment markers allow making a specification only take effect in some
 environments::
 
-    marker_op     = version_cmp | (wsp* 'in') | (wsp* 'not' wsp+ 'in')
+    marker_op     = version_cmp | (wsp+ 'in' wsp+) | (wsp+ 'not' wsp+ 'in' wsp+)
     python_str_c  = (wsp | letter | digit | '(' | ')' | '.' | '{' | '}' |
                      '-' | '_' | '*' | '#' | ':' | ';' | ',' | '/' | '?' |
                      '[' | ']' | '!' | '~' | '`' | '@' | '$' | '%' | '^' |
@@ -84,7 +87,7 @@ environments::
                      'platform_system' | 'platform_version' |
                      'platform_machine' | 'platform_python_implementation' |
                      'implementation_name' | 'implementation_version' |
-                     'extra' # ONLY when defined by a containing layer
+                     'extra' | 'extras' | 'dependency_groups' # ONLY when defined by a containing layer
                      )
     marker_var    = wsp* (env_var | python_str)
     marker_expr   = marker_var marker_op marker_var
@@ -113,7 +116,7 @@ Giving us a rule for name based requirements::
 
 And a rule for direct reference specifications::
 
-    url_req       = name wsp* extras? wsp* urlspec wsp+ quoted_marker?
+    url_req       = name wsp* extras? wsp* urlspec (wsp+ quoted_marker?)?
 
 Leading to the unified rule that can specify a dependency.::
 
@@ -124,6 +127,8 @@ Whitespace
 
 Non line-breaking whitespace is mostly optional with no semantic meaning. The
 sole exception is detecting the end of a URL requirement.
+
+.. _dependency-specifiers-names:
 
 Names
 -----
@@ -138,6 +143,8 @@ redefinition of name may take place in a future metadata PEP. The regex (run
 with re.IGNORECASE) is::
 
     ^([A-Z0-9]|[A-Z0-9][A-Z0-9._-]*[A-Z0-9])$
+
+.. _dependency-specifiers-extras:
 
 Extras
 ------
@@ -156,15 +163,20 @@ are listed in the "security" extra of requests.
 
 If multiple extras are listed, all the dependencies are unioned together.
 
+.. _dependency-specifiers-versions:
+
 Versions
 --------
 
-See :pep:`440` for more detail on both version numbers and version
-comparisons. Version specifications limit the versions of a distribution that
-can be used. They only apply to distributions looked up by name, rather than
+See the :ref:`Version specifier specification <version-specifiers>` for
+more detail on both version numbers and version comparisons. Version
+specifications limit the versions of a distribution that can be
+used. They only apply to distributions looked up by name, rather than
 via a URL. Version comparison are also used in the markers feature. The
-optional brackets around a version are present for compatibility with :pep:`345`
-but should not be generated, only accepted.
+optional brackets around a version are present for compatibility with
+:pep:`345` but should not be generated, only accepted.
+
+.. _dependency-specifiers-environment-markers:
 
 Environment Markers
 -------------------
@@ -184,14 +196,16 @@ safely evaluate it without running arbitrary code that could become a security
 vulnerability. Markers were first standardised in :pep:`345`. This document
 fixes some issues that were observed in the design described in :pep:`426`.
 
-Comparisons in marker expressions are typed by the comparison operator.  The
-<marker_op> operators that are not in <version_cmp> perform the same as they
-do for strings in Python. The <version_cmp> operators use the :pep:`440`
-version comparison rules when those are defined (that is when both
-sides have a valid version specifier). If there is no defined :pep:`440`
-behaviour and the operator exists in Python, then the operator falls back to
-the Python behaviour. Otherwise an error should be raised. e.g. the following
-will result in  errors::
+Comparisons in marker expressions are typed by the comparison operator and the
+type of the marker value. The <marker_op> operators that are not in
+<version_cmp> perform the same as they do for strings or sets in Python based on
+whether the marker value is a string or set itself. The <version_cmp> operators
+use the version comparison rules of the
+:ref:`Version specifier specification <version-specifiers>` when those are
+defined (that is when both sides have a valid version specifier). If there is no
+defined behaviour of this specification and the operator exists in Python, then
+the operator falls back to the Python behaviour for the types involved.
+Otherwise an error should be raised. e.g. the following will result in errors::
 
     "dog" ~= "fred"
     python_version ~= "surprise"
@@ -222,55 +236,85 @@ no current specification for this. Regardless, outside of a context where this
 special handling is taking place, the "extra" variable should result in an
 error like all other unknown variables.
 
+The "extras" and "dependency_groups" variables are also special. They are used
+to specify any requested extras or dependency groups when installing from a lock
+file. Outside of the context of lock files, these two variables should result in
+an error like all other unknown variables.
+
 .. list-table::
    :header-rows: 1
 
    * - Marker
      - Python equivalent
+     - Type
      - Sample values
    * - ``os_name``
-     - ``os.name``
+     - :py:data:`os.name`
+     - String
      - ``posix``, ``java``
    * - ``sys_platform``
-     - ``sys.platform``
+     - :py:data:`sys.platform`
+     - String
      - ``linux``, ``linux2``, ``darwin``, ``java1.8.0_51`` (note that "linux"
        is from Python3 and "linux2" from Python2)
    * - ``platform_machine``
-     - ``platform.machine()``
+     - :py:func:`platform.machine()`
+     - String
      - ``x86_64``
    * - ``platform_python_implementation``
-     - ``platform.python_implementation()``
+     - :py:func:`platform.python_implementation()`
+     - String
      - ``CPython``, ``Jython``
    * - ``platform_release``
-     - ``platform.release()``
+     - :py:func:`platform.release()`
+     - String
      - ``3.14.1-x86_64-linode39``, ``14.5.0``, ``1.8.0_51``
    * - ``platform_system``
-     - ``platform.system()``
+     - :py:func:`platform.system()`
+     - String
      - ``Linux``, ``Windows``, ``Java``
    * - ``platform_version``
-     - ``platform.version()``
+     - :py:func:`platform.version()`
+     - String
      - ``#1 SMP Fri Apr 25 13:07:35 EDT 2014``
        ``Java HotSpot(TM) 64-Bit Server VM, 25.51-b03, Oracle Corporation``
        ``Darwin Kernel Version 14.5.0: Wed Jul 29 02:18:53 PDT 2015; root:xnu-2782.40.9~2/RELEASE_X86_64``
    * - ``python_version``
      - ``'.'.join(platform.python_version_tuple()[:2])``
+     - :ref:`Version <version-specifiers>`
      - ``3.4``, ``2.7``
    * - ``python_full_version``
-     - ``platform.python_version()``
+     - :py:func:`platform.python_version()`
+     - :ref:`Version <version-specifiers>`
      - ``3.4.0``, ``3.5.0b1``
    * - ``implementation_name``
-     - ``sys.implementation.name``
+     - :py:data:`sys.implementation.name <sys.implementation>`
+     - String
      - ``cpython``
    * - ``implementation_version``
      - see definition below
+     - :ref:`Version <version-specifiers>`
      - ``3.4.0``, ``3.5.0b1``
    * - ``extra``
      - An error except when defined by the context interpreting the
        specification.
-     - ``test``
+     - String
+     - ``toml``
+   * - ``extras``
+     - An error except when defined by the context interpreting the
+       specification.
+     - Set of strings
+     - ``{"toml"}``
+   * - ``dependency_groups``
+     - An error except when defined by the context interpreting the
+       specification.
+     - Set of strings
+     - ``{"test"}``
 
 The ``implementation_version`` marker variable is derived from
-``sys.implementation.version``::
+:py:data:`sys.implementation.version <sys.implementation>`:
+
+.. code-block:: python
 
     def format_full_version(info):
         version = '{0.major}.{0.minor}.{0.micro}'.format(info)
@@ -287,6 +331,8 @@ The ``implementation_version`` marker variable is derived from
 This environment markers section, initially defined through :pep:`508`, supersedes the environment markers
 section in :pep:`345`.
 
+.. _dependency-specifiers-grammar:
+
 Complete Grammar
 ================
 
@@ -296,7 +342,7 @@ The complete parsley grammar::
     version_cmp   = wsp* <'<=' | '<' | '!=' | '==' | '>=' | '>' | '~=' | '==='>
     version       = wsp* <( letterOrDigit | '-' | '_' | '.' | '*' | '+' | '!' )+>
     version_one   = version_cmp:op version:v wsp* -> (op, v)
-    version_many  = version_one:v1 (wsp* ',' version_one)*:v2 -> [v1] + v2
+    version_many  = version_one:v1 (',' version_one)*:v2 (',' wsp*)? -> [v1] + v2
     versionspec   = ('(' version_many:v ')' ->v) | version_many
     urlspec       = '@' wsp* <URI_reference>
     marker_op     = version_cmp | (wsp* 'in') | (wsp* 'not' wsp+ 'in')
@@ -313,7 +359,7 @@ The complete parsley grammar::
                      'platform_system' | 'platform_version' |
                      'platform_machine' | 'platform_python_implementation' |
                      'implementation_name' | 'implementation_version' |
-                     'extra' # ONLY when defined by a containing layer
+                     'extra' | 'extras' | 'dependency_groups' # ONLY when defined by a containing layer
                      ):varname -> lookup(varname)
     marker_var    = wsp* (env_var | python_str)
     marker_expr   = marker_var:l marker_op:o marker_var:r -> (o, l, r)
@@ -397,7 +443,9 @@ The complete parsley grammar::
     sub_delims    = '!' | '$' | '&' | '\\'' | '(' | ')' | '*' | '+' | ',' | ';' | '='
     hexdig        = digit | 'a' | 'A' | 'b' | 'B' | 'c' | 'C' | 'd' | 'D' | 'e' | 'E' | 'f' | 'F'
 
-A test program - if the grammar is in a string ``grammar``::
+A test program - if the grammar is in a string ``grammar``:
+
+.. code-block:: python
 
     import os
     import sys
@@ -415,6 +463,7 @@ A test program - if the grammar is in a string ``grammar``::
         "name",
         "name<=1",
         "name>=3",
+        "name>=3,",
         "name>=3,<2",
         "name@http://foo.com",
         "name [fred,bar] @ http://foo.com ; python_version=='2.7'",
@@ -463,17 +512,20 @@ A test program - if the grammar is in a string ``grammar``::
         print("%s -> %s" % (test, parsed))
 
 
-Summary of changes to PEP 508
-=============================
+History
+=======
 
-The following changes were made based on feedback after its initial
-implementation:
-
-- The definition of ``python_version`` was changed from
-  ``platform.python_version()[:3]`` to
+- November 2015: This specification was approved through :pep:`508`.
+- July 2019: The definition of ``python_version`` was `changed
+  <python-version-change_>`_ from ``platform.python_version()[:3]`` to
   ``'.'.join(platform.python_version_tuple()[:2])``, to accommodate potential
   future versions of Python with 2-digit major and minor versions
   (e.g. 3.10). [#future_versions]_
+- June 2024: The definition of ``version_many`` was changed to allow trailing
+  commas, matching with the behavior of the Python implementation that has been
+  in use since late 2022.
+- April 2025: Added ``extras`` and ``dependency_groups`` for
+  :ref:`lock-file-spec` as approved through :pep:`751`.
 
 
 References
@@ -488,3 +540,7 @@ References
 .. [#future_versions] Future Python versions might be problematic with the
    definition of Environment Marker Variable ``python_version``
    (https://github.com/python/peps/issues/560)
+
+
+
+.. _python-version-change: https://mail.python.org/pipermail/distutils-sig/2018-January/031920.html

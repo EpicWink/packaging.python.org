@@ -1,17 +1,108 @@
 .. _declaring-project-metadata:
+.. _pyproject-toml-spec:
 
-==========================
-Declaring project metadata
-==========================
+================================
+``pyproject.toml`` specification
+================================
 
-:pep:`621` specifies how to write a project's
-:ref:`core metadata <core-metadata>` in a ``pyproject.toml`` file for
-packaging-related tools to consume. It defines the following
-specification as the canonical source for the format used.
+.. warning::
+
+   This is a **technical, formal specification**. For a gentle,
+   user-friendly guide to ``pyproject.toml``, see
+   :ref:`writing-pyproject-toml`.
+
+The ``pyproject.toml`` file acts as a configuration file for packaging-related
+tools (as well as other tools).
+
+.. note:: This specification was originally defined in :pep:`518` and :pep:`621`.
+
+The ``pyproject.toml`` file is written in `TOML <https://toml.io>`_. Three
+tables are currently specified, namely
+:ref:`[build-system] <pyproject-build-system-table>`,
+:ref:`[project] <pyproject-project-table>` and
+:ref:`[tool] <pyproject-tool-table>`. Other tables are reserved for future
+use (tool-specific configuration should use the ``[tool]`` table).
+
+.. _pyproject-build-system-table:
+
+Declaring build system dependencies: the ``[build-system]`` table
+=================================================================
+
+The ``[build-system]`` table declares any Python level dependencies that
+must be installed in order to run the project's build system
+successfully.
+
+.. TODO: merge with PEP 517
+
+The ``[build-system]`` table is used to store build-related data.
+Initially, only one key of the table is valid and is mandatory
+for the table: ``requires``. This key must have a value of a list
+of strings representing dependencies required to execute the
+build system. The strings in this list follow the :ref:`version specifier
+specification <version-specifiers>`.
+
+An example ``[build-system]`` table for a project built with
+``setuptools`` is:
+
+.. code-block:: toml
+
+   [build-system]
+   # Minimum requirements for the build system to execute.
+   requires = ["setuptools"]
+
+Build tools are expected to use the example configuration file above as
+their default semantics when a ``pyproject.toml`` file is not present.
+
+Tools should not require the existence of the ``[build-system]`` table.
+A ``pyproject.toml`` file may be used to store configuration details
+other than build-related data and thus lack a ``[build-system]`` table
+legitimately. If the file exists but is lacking the ``[build-system]``
+table then the default values as specified above should be used.
+If the table is specified but is missing required fields then the tool
+should consider it an error.
 
 
-Specification
-=============
+To provide a type-specific representation of the resulting data from
+the TOML file for illustrative purposes only, the following
+`JSON Schema <https://json-schema.org>`_ would match the data format:
+
+.. code-block:: json
+
+   {
+       "$schema": "http://json-schema.org/schema#",
+
+       "type": "object",
+       "additionalProperties": false,
+
+       "properties": {
+           "build-system": {
+               "type": "object",
+               "additionalProperties": false,
+
+               "properties": {
+                   "requires": {
+                       "type": "array",
+                       "items": {
+                           "type": "string"
+                       }
+                   }
+               },
+               "required": ["requires"]
+           },
+
+           "tool": {
+               "type": "object"
+           }
+       }
+   }
+
+
+.. _pyproject-project-table:
+
+Declaring project metadata: the ``[project]`` table
+===================================================
+
+The ``[project]`` table specifies the project's :ref:`core metadata <core-metadata>`.
 
 There are two kinds of metadata: *static* and *dynamic*. Static
 metadata is specified in the ``pyproject.toml`` file directly and
@@ -21,12 +112,6 @@ by the metadata). Dynamic metadata is listed via the ``dynamic`` key
 (defined later in this specification) and represents metadata that a
 tool will later provide.
 
-The keys defined in this specification MUST be in a table named
-``[project]`` in ``pyproject.toml``. No tools may add keys to this
-table which are not defined by this specification. For tools wishing
-to store their own settings in ``pyproject.toml``, they may use the
-``[tool]`` table as defined in the
-:ref:`build dependency declaration specification <declaring-build-dependencies>`.
 The lack of a ``[project]`` table implicitly means the :term:`build backend <Build Backend>`
 will dynamically provide all keys.
 
@@ -53,6 +138,7 @@ The complete list of keys allowed in the ``[project]`` table are:
 - ``gui-scripts``
 - ``keywords``
 - ``license``
+- ``license-files``
 - ``maintainers``
 - ``name``
 - ``optional-dependencies``
@@ -62,6 +148,8 @@ The complete list of keys allowed in the ``[project]`` table are:
 - ``urls``
 - ``version``
 
+
+.. _pyproject-toml-name:
 
 ``name``
 --------
@@ -75,10 +163,8 @@ The name of the project.
 Tools SHOULD :ref:`normalize <name-normalization>` this name, as soon
 as it is read for internal consistency.
 
-.. code-block:: toml
 
-    [project]
-    name = "spam"
+.. _pyproject-toml-version:
 
 ``version``
 -----------
@@ -87,14 +173,13 @@ as it is read for internal consistency.
 - Corresponding :ref:`core metadata <core-metadata>` field:
   :ref:`Version <core-metadata-version>`
 
-The version of the project as supported by :pep:`440`.
+The version of the project, as defined in the
+:ref:`Version specifier specification <version-specifiers>`.
 
 Users SHOULD prefer to specify already-normalized versions.
 
-.. code-block:: toml
 
-    [project]
-    version = "2020.0.0"
+.. _pyproject-toml-description:
 
 ``description``
 ---------------
@@ -103,12 +188,11 @@ Users SHOULD prefer to specify already-normalized versions.
 - Corresponding :ref:`core metadata <core-metadata>` field:
   :ref:`Summary <core-metadata-summary>`
 
-The summary description of the project.
+The summary description of the project in one line. Tools MAY error
+if this includes multiple lines.
 
-.. code-block:: toml
 
-    [project]
-    description = "Lovely Spam! Wonderful Spam!"
+.. _pyproject-toml-readme:
 
 ``readme``
 ----------
@@ -148,13 +232,8 @@ alternative content-types which they can transform to a content-type
 as supported by the :ref:`core metadata <core-metadata>`. Otherwise
 tools MUST raise an error for unsupported content-types.
 
-.. code-block:: toml
 
-    [project]
-    # A single pyproject.toml file can only have one of the following.
-    readme = "README.md"
-    readme = "README.rst"
-    readme = {file = "README.txt", content-type = "text/markdown"}
+.. _pyproject-toml-requires-python:
 
 ``requires-python``
 -------------------
@@ -165,31 +244,77 @@ tools MUST raise an error for unsupported content-types.
 
 The Python version requirements of the project.
 
-.. code-block:: toml
 
-    [project]
-    requires-python = ">=3.8"
+.. _pyproject-toml-license:
 
 ``license``
 -----------
+
+- TOML_ type: string
+- Corresponding :ref:`core metadata <core-metadata>` field:
+  :ref:`License-Expression <core-metadata-license-expression>`
+
+Text string that is a valid SPDX
+:term:`license expression <License Expression>`,
+as specified in :doc:`/specifications/license-expression`.
+Tools SHOULD validate and perform case normalization of the expression.
+
+Legacy specification
+''''''''''''''''''''
 
 - TOML_ type: table
 - Corresponding :ref:`core metadata <core-metadata>` field:
   :ref:`License <core-metadata-license>`
 
 The table may have one of two keys. The ``file`` key has a string
-value that is a file path relative to ``pyproject.toml`` to the file
+value that is a file path relative to :file:`pyproject.toml` to the file
 which contains the license for the project. Tools MUST assume the
 file's encoding is UTF-8. The ``text`` key has a string value which is
 the license of the project.  These keys are mutually exclusive, so a
 tool MUST raise an error if the metadata specifies both keys.
 
-.. code-block:: toml
+The table subkeys were deprecated by :pep:`639` in favor of the string value.
 
-    [project]
-    # A single pyproject.toml file can only have one of the following.
-    license = {file = "LICENSE"}
-    license = {text = "MIT License"}
+.. _pyproject-toml-license-files:
+
+``license-files``
+-----------------
+
+- TOML_ type: array of strings
+- Corresponding :ref:`core metadata <core-metadata>` field:
+  :ref:`License-File <core-metadata-license-file>`
+
+An array specifying paths in the project source tree relative to the project
+root directory (i.e. directory containing :file:`pyproject.toml` or legacy project
+configuration files, e.g. :file:`setup.py`, :file:`setup.cfg`, etc.)
+to file(s) containing licenses and other legal notices to be
+distributed with the package.
+
+The strings MUST contain valid glob patterns, as specified in
+:doc:`/specifications/glob-patterns`.
+
+Patterns are relative to the directory containing :file:`pyproject.toml`,
+
+Tools MUST assume that license file content is valid UTF-8 encoded text,
+and SHOULD validate this and raise an error if it is not.
+
+Build tools:
+
+- MUST include all files matched by a listed pattern in all distribution
+  archives.
+- MUST list each matched file path under a License-File field in the
+  Core Metadata.
+
+If the ``license-files`` key is present and
+is set to a value of an empty array, then tools MUST NOT include any
+license files and MUST NOT raise an error.
+If the ``license-files`` key is not defined, tools can decide how to handle
+license files. For example they can choose not to include any files or use
+their own logic to discover the appropriate files in the distribution.
+
+
+.. _pyproject-toml-authors:
+.. _pyproject-toml-maintainers:
 
 ``authors``/``maintainers``
 ---------------------------
@@ -232,19 +357,8 @@ follows:
    as appropriate, with the format ``{name} <{email}>``.
 4. Multiple values should be separated by commas.
 
-.. code-block:: toml
 
-    [project]
-    authors = [
-      {name = "Pradyun Gedam", email = "pradyun@example.com"},
-      {name = "Tzu-Ping Chung", email = "tzu-ping@example.com"},
-      {name = "Another person"},
-      {email = "different.person@example.com"},
-    ]
-    maintainers = [
-      {name = "Brett Cannon", email = "brett@python.org"}
-    ]
-
+.. _pyproject-toml-keywords:
 
 ``keywords``
 ------------
@@ -255,10 +369,8 @@ follows:
 
 The keywords for the project.
 
-.. code-block:: toml
 
-    [project]
-    keywords = ["egg", "bacon", "sausage", "tomatoes", "Lobster Thermidor"]
+.. _pyproject-toml-classifiers:
 
 ``classifiers``
 ---------------
@@ -269,12 +381,14 @@ The keywords for the project.
 
 Trove classifiers which apply to the project.
 
-.. code-block:: toml
+The use of ``License ::`` classifiers is deprecated and tools MAY issue a
+warning informing users about that.
+Build tools MAY raise an error if both the ``license`` string value
+(translating to ``License-Expression`` metadata field) and the ``License ::``
+classifiers are used.
 
-    classifiers = [
-      "Development Status :: 4 - Beta",
-      "Programming Language :: Python"
-    ]
+
+.. _pyproject-toml-urls:
 
 ``urls``
 --------
@@ -284,15 +398,13 @@ Trove classifiers which apply to the project.
   :ref:`Project-URL <core-metadata-project-url>`
 
 A table of URLs where the key is the URL label and the value is the
-URL itself.
+URL itself. See :ref:`well-known-project-urls` for normalization rules
+and well-known rules when processing metadata for presentation.
 
-.. code-block:: toml
 
-    [project.urls]
-    Homepage = "https://example.com"
-    Documentation = "https://readthedocs.org"
-    Repository = "https://github.com/me/spam.git"
-    Changelog = "https://github.com/me/spam/blob/master/CHANGELOG.md"
+.. _pyproject-toml-scripts:
+.. _pyproject-toml-gui-scripts:
+.. _pyproject-toml-entry-points:
 
 Entry points
 ------------
@@ -323,17 +435,9 @@ Build back-ends MUST raise an error if the metadata defines a
 be ambiguous in the face of ``[project.scripts]`` and
 ``[project.gui-scripts]``, respectively.
 
-.. code-block:: toml
 
-    [project.scripts]
-    spam-cli = "spam:main_cli"
-
-    [project.gui-scripts]
-    spam-gui = "spam:main_gui"
-
-    [project.entry-points."spam.magical"]
-    tomatoes = "spam:main_tomatoes"
-
+.. _pyproject-toml-dependencies:
+.. _pyproject-toml-optional-dependencies:
 
 ``dependencies``/``optional-dependencies``
 ------------------------------------------
@@ -361,22 +465,9 @@ in the array thus becomes a corresponding
 matching :ref:`Provides-Extra <core-metadata-provides-extra>`
 metadata.
 
-.. code-block:: toml
 
-    [project]
-    dependencies = [
-      "httpx",
-      "gidgethub[httpx]>4.0.0",
-      "django>2.1; os_name != 'nt'",
-      "django>2.0; os_name == 'nt'",
-    ]
-
-    [project.optional-dependencies]
-    gui = ["PyQt5"]
-    cli = [
-      "rich",
-      "click",
-    ]
+.. _pyproject-toml-dynamic:
+.. _declaring-project-metadata-dynamic:
 
 ``dynamic``
 -----------
@@ -415,68 +506,39 @@ provided via tooling later on.
   the data for it (omitting the data, if determined to be the accurate
   value, is acceptable).
 
-.. code-block:: toml
-
-    dynamic = ["version", "description", "optional-dependencies"]
 
 
-Example
+.. _pyproject-tool-table:
+
+Arbitrary tool configuration: the ``[tool]`` table
+==================================================
+
+The ``[tool]`` table is where any tool related to your Python
+project, not just build tools, can have users specify configuration
+data as long as they use a sub-table within ``[tool]``, e.g. the
+`flit <https://pypi.python.org/pypi/flit>`_ tool would store its
+configuration in ``[tool.flit]``.
+
+A mechanism is needed to allocate names within the ``tool.*``
+namespace, to make sure that different projects do not attempt to use
+the same sub-table and collide. Our rule is that a project can use
+the subtable ``tool.$NAME`` if, and only if, they own the entry for
+``$NAME`` in the Cheeseshop/PyPI.
+
+
+
+History
 =======
 
-.. code-block:: toml
+- May 2016: The initial specification of the ``pyproject.toml`` file, with just
+  a ``[build-system]`` containing a ``requires`` key and a ``[tool]`` table, was
+  approved through :pep:`518`.
 
-    [project]
-    name = "spam"
-    version = "2020.0.0"
-    description = "Lovely Spam! Wonderful Spam!"
-    readme = "README.rst"
-    requires-python = ">=3.8"
-    license = {file = "LICENSE.txt"}
-    keywords = ["egg", "bacon", "sausage", "tomatoes", "Lobster Thermidor"]
-    authors = [
-      {name = "Pradyun Gedam", email = "pradyun@example.com"},
-      {name = "Tzu-Ping Chung", email = "tzu-ping@example.com"},
-      {name = "Another person"},
-      {email = "different.person@example.com"},
-    ]
-    maintainers = [
-      {name = "Brett Cannon", email = "brett@python.org"}
-    ]
-    classifiers = [
-      "Development Status :: 4 - Beta",
-      "Programming Language :: Python"
-    ]
+- November 2020: The specification of the ``[project]`` table was approved
+  through :pep:`621`.
 
-    dependencies = [
-      "httpx",
-      "gidgethub[httpx]>4.0.0",
-      "django>2.1; os_name != 'nt'",
-      "django>2.0; os_name == 'nt'",
-    ]
-
-    # dynamic = ["version", "description"]
-
-    [project.optional-dependencies]
-    gui = ["PyQt5"]
-    cli = [
-      "rich",
-      "click",
-    ]
-
-    [project.urls]
-    Homepage = "https://example.com"
-    Documentation = "https://readthedocs.org"
-    Repository = "https://github.com/me/spam.git"
-    Changelog = "https://github.com/me/spam/blob/master/CHANGELOG.md"
-
-    [project.scripts]
-    spam-cli = "spam:main_cli"
-
-    [project.gui-scripts]
-    spam-gui = "spam:main_gui"
-
-    [project.entry-points."spam.magical"]
-    tomatoes = "spam:main_tomatoes"
+- December 2024: The ``license`` key was redefined, the ``license-files`` key was
+  added and ``License::`` classifiers were deprecated through :pep:`639`.
 
 
 .. _TOML: https://toml.io

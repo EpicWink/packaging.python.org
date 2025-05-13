@@ -1,3 +1,5 @@
+.. highlight:: text
+
 .. _`core-metadata`:
 
 ============================
@@ -46,13 +48,14 @@ Metadata-Version
 .. versionadded:: 1.0
 
 Version of the file format; legal values are "1.0", "1.1", "1.2", "2.1",
-"2.2", and "2.3".
+"2.2", "2.3", and "2.4".
 
 Automated tools consuming metadata SHOULD warn if ``metadata_version`` is
 greater than the highest version they support, and MUST fail if
 ``metadata_version`` has a greater major version than the highest
-version they support (as described in :pep:`440`, the major version is the
-value before the first dot).
+version they support (as described in the
+:ref:`Version specifier specification <version-specifiers>`,
+the major version is the value before the first dot).
 
 For broader compatibility, build tools MAY choose to produce
 distribution metadata using the lowest metadata version that includes
@@ -60,7 +63,7 @@ all of the needed fields.
 
 Example::
 
-    Metadata-Version: 2.3
+    Metadata-Version: 2.4
 
 
 .. _core-metadata-name:
@@ -70,15 +73,11 @@ Name
 
 .. versionadded:: 1.0
 .. versionchanged:: 2.1
-   Added additional restrictions on format from :pep:`508`
+   Added restrictions on format from the :ref:`name format <name-format>`.
 
 The name of the distribution. The name field is the primary identifier for a
-distribution. A valid name consists only of ASCII letters and numbers, period,
-underscore and hyphen. It must start and end with a letter or number.
-Distribution names are limited to those which match the following
-regex (run with ``re.IGNORECASE``)::
-
-    ^([A-Z0-9]|[A-Z0-9][A-Z0-9._-]*[A-Z0-9])$
+distribution. It must conform to the :ref:`name format specification
+<name-format>`.
 
 Example::
 
@@ -94,7 +93,8 @@ Version
 .. versionadded:: 1.0
 
 A string containing the distribution's version number.  This
-field  must be in the format specified in :pep:`440`.
+field  must be in the format specified in the
+:ref:`Version specifier specification <version-specifiers>`.
 
 Example::
 
@@ -341,32 +341,6 @@ Example::
    These tools have been very widely used for many years, so it was
    easier to update the specification to match the de facto standard.
 
-.. _home-page-optional:
-.. _core-metadata-home-page:
-
-Home-page
-=========
-
-.. versionadded:: 1.0
-
-A string containing the URL for the distribution's home page.
-
-Example::
-
-    Home-page: http://www.example.com/~cschultz/bvote/
-
-.. _core-metadata-download-url:
-
-Download-URL
-============
-
-.. versionadded:: 1.1
-
-A string containing the URL from which this version of the distribution
-can be downloaded.  (This means that the URL can't be something like
-".../BeagleVote-latest.tgz", but instead must be ".../BeagleVote-0.45.tgz".)
-
-
 .. _author-optional:
 .. _core-metadata-author:
 
@@ -460,6 +434,14 @@ License
 =======
 
 .. versionadded:: 1.0
+.. deprecated:: 2.4
+   in favour of ``License-Expression``.
+
+.. warning::
+    As of Metadata 2.4, ``License`` and ``License-Expression`` are mutually
+    exclusive. If both are specified, tools which parse metadata will disregard
+    ``License`` and PyPI will reject uploads.
+    See `PEP 639 <https://peps.python.org/pep-0639/#deprecate-license-field>`__.
 
 Text indicating the license covering the distribution where the license
 is not a selection from the "License" Trove classifiers. See
@@ -477,6 +459,50 @@ Examples::
     License: GPL version 3, excluding DRM provisions
 
 
+.. _license-expression-optional:
+.. _core-metadata-license-expression:
+
+License-Expression
+==================
+
+.. versionadded:: 2.4
+
+Text string that is a valid SPDX
+:term:`license expression <License Expression>`,
+as specified in :doc:`/specifications/license-expression`.
+
+Examples::
+
+    License-Expression: MIT
+    License-Expression: BSD-3-Clause
+    License-Expression: MIT AND (Apache-2.0 OR BSD-2-Clause)
+    License-Expression: MIT OR GPL-2.0-or-later OR (FSFUL AND BSD-2-Clause)
+    License-Expression: GPL-3.0-only WITH Classpath-Exception-2.0 OR BSD-3-Clause
+    License-Expression: LicenseRef-Special-License OR CC0-1.0 OR Unlicense
+    License-Expression: LicenseRef-Proprietary
+
+
+.. _license-file-optional:
+.. _core-metadata-license-file:
+
+License-File (multiple use)
+===========================
+
+.. versionadded:: 2.4
+
+Each entry is a string representation of the path of a license-related file.
+The path is located within the project source tree, relative to the project
+root directory. For details see :pep:`639`.
+
+Examples::
+
+    License-File: LICENSE
+    License-File: AUTHORS
+    License-File: LICENSE.txt
+    License-File: licenses/LICENSE.MIT
+    License-File: licenses/LICENSE.CC0
+
+
 .. _metadata-classifier:
 .. _core-metadata-classifier:
 
@@ -489,6 +515,11 @@ Each entry is a string giving a single classification value
 for the distribution.  Classifiers are described in :pep:`301`,
 and the Python Package Index publishes a dynamic list of
 `currently defined classifiers <https://pypi.org/classifiers/>`__.
+
+.. note::
+    The use of ``License ::`` classifiers  is deprecated as of Metadata 2.4,
+    use ``License-Expression`` instead. See
+    `PEP 639 <https://peps.python.org/pep-0639/#deprecate-license-classifiers>`_.
 
 This field may be followed by an environment marker after a semicolon.
 
@@ -549,18 +580,17 @@ Requires-Python
 .. versionadded:: 1.2
 
 This field specifies the Python version(s) that the distribution is
-guaranteed to be compatible with. Installation tools may look at this when
+compatible with. Installation tools may look at this when
 picking which version of a project to install.
 
 The value must be in the format specified in :doc:`version-specifiers`.
 
+For example, if a distribution uses :ref:`f-strings <whatsnew36-pep498>`
+then it may prevent installation on Python < 3.6 by specifying::
+
+    Requires-Python: >=3.6
+
 This field cannot be followed by an environment marker.
-
-Examples::
-
-    Requires-Python: >=3
-    Requires-Python: >2.6,!=3.0.*,!=3.1.*
-    Requires-Python: ~=2.6
 
 .. _core-metadata-requires-external:
 
@@ -585,8 +615,8 @@ This field may be followed by an environment marker after a semicolon.
 
 Because they refer to non-Python software releases, version numbers
 for this field are **not** required to conform to the format
-specified in :pep:`440`:  they should correspond to the
-version scheme used by the external dependency.
+specified in the :ref:`Version specifier specification <version-specifiers>`:
+they should correspond to the version scheme used by the external dependency.
 
 Notice that there is no particular rule on the strings to be used.
 
@@ -613,6 +643,10 @@ Example::
 
 The label is free text limited to 32 characters.
 
+Starting with :pep:`753`, project metadata consumers (such as the Python
+Package Index) can use a standard normalization process to discover "well-known"
+labels, which can then be given special presentations when being rendered
+for human consumption. See :ref:`well-known-project-urls`.
 
 .. _metadata_provides_extra:
 .. _core-metadata-provides-extra:
@@ -632,7 +666,7 @@ of lowercase ASCII letters, ASCII numbers, and hyphen. It must start and end
 with a letter or number. Hyphens cannot be followed by another hyphen. Names are
 limited to those which match the following regex (which guarantees unambiguity)::
 
-    ^([a-z0-9]|[a-z0-9]([a-z0-9-](?!--))*[a-z0-9])$
+    ^[a-z0-9]+(-[a-z0-9]+)*$
 
 
 The specified name may be used to make a dependency conditional on whether the
@@ -726,7 +760,7 @@ This field may be followed by an environment marker after a semicolon.
 Examples::
 
     Provides-Dist: OtherProject
-    Provides-Dist: AnotherProject (3.4)
+    Provides-Dist: AnotherProject==3.4
     Provides-Dist: virtual_package; python_version >= "3.4"
 
 .. _core-metadata-obsoletes-dist:
@@ -762,6 +796,45 @@ Examples::
 
 Deprecated Fields
 =================
+
+Deprecated fields should be avoided, but they are valid metadata fields. They
+may be removed in future versions of the core metadata standard (at which point
+they will only be valid in files that specify a metadata version prior to the
+removal). Tools SHOULD warn users when deprecated fields are used.
+
+.. _home-page-optional:
+.. _core-metadata-home-page:
+
+Home-page
+---------
+
+.. versionadded:: 1.0
+
+.. deprecated:: 1.2
+
+    Per :pep:`753`, use :ref:`core-metadata-project-url` instead.
+
+A string containing the URL for the distribution's home page.
+
+Example::
+
+    Home-page: http://www.example.com/~cschultz/bvote/
+
+.. _core-metadata-download-url:
+
+Download-URL
+------------
+
+.. versionadded:: 1.1
+
+.. deprecated:: 1.2
+
+    Per :pep:`753`, use :ref:`core-metadata-project-url` instead.
+
+A string containing the URL from which this version of the distribution
+can be downloaded.  (This means that the URL can't be something like
+"``.../BeagleVote-latest.tgz``", but instead must be
+"``.../BeagleVote-0.45.tgz``".)
 
 Requires
 --------
@@ -844,6 +917,31 @@ Example::
 
     Obsoletes: Gorgon
 
+
+History
+=======
+
+- March 2001: Core metadata 1.0 was approved through :pep:`241`.
+- April 2003: Core metadata 1.1 was approved through :pep:`314`:
+- February 2010: Core metadata 1.2 was approved through :pep:`345`.
+- February 2018: Core metadata 2.1 was approved through :pep:`566`.
+
+  - Added ``Description-Content-Type`` and ``Provides-Extra``.
+  - Added canonical method for transforming metadata to JSON.
+  - Restricted the grammar of the ``Name`` field.
+
+- October 2020: Core metadata 2.2 was approved through :pep:`643`.
+
+  - Added the ``Dynamic`` field.
+
+- March 2022: Core metadata 2.3 was approved through :pep:`685`.
+
+  - Restricted extra names to be normalized.
+
+- August 2024: Core metadata 2.4 was approved through :pep:`639`.
+
+  - Added the ``License-Expression`` field.
+  - Added the ``License-File`` field.
 
 ----
 
